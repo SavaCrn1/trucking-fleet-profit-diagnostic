@@ -1,6 +1,6 @@
 # Trucking Fleet Profit Diagnostic
 
-A Python data pipeline that turns raw trip-level trucking data into a client-ready HTML diagnostic report — analyzing driver, broker, and dispatcher performance to surface where a fleet is losing profit and what to do about it.
+A Python data pipeline that turns raw trip-level trucking data into a client-ready HTML diagnostic report - analyzing driver, broker, and dispatcher performance to surface where a fleet is losing profit and what to do about it.
 
 **[View the sample report ->](https://savacrn1.github.io/trucking-fleet-profit-diagnostic/)**
 
