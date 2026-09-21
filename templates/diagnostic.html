@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ client_name }} - Profit Diagnostic Report (Last 30 Days)</title>
+    <style>
+    .flex-row {
+    	display: flex;
+    	gap: 30px;
+    	align-items: flex-start;
+	}
+
+	.table-container {
+   	 flex: 1.3;
+	}
+
+	.chart-container {
+    	flex: 1;
+    }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f8f6; /* off-white */
+            color: #001f4d; /* navy blue text */
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #001f4d;
+            margin-bottom: 0;
+        }
+        h1 {
+            font-size: 2.2em;
+            border-bottom: 3px solid #708090; /* slate grey */
+            padding-bottom: 8px;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-top: 40px;
+            border-bottom: 2px solid #708090;
+            padding-bottom: 6px;
+        }
+        .subtitle {
+            font-style: italic;
+            color: #708090;
+            margin-top: 4px;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            box-shadow: 0 0 5px #ccc;
+        }
+        th, td {
+            border: 1px solid #708090; /* grey border */
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #001f4d; /* navy */
+            color: #f9f8f6; /* off-white text */
+        }
+        tbody tr:nth-child(even) {
+            background-color: #e9ecef; /* light grey rows */
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .blank-section {
+            border: 3px solid #708090;
+            background-color: #fff;						
+            min-height: 80px;
+            padding: 15px;
+            font-style: bold;
+            color: #001f4d;
+	    font-size: 1em;
+        }
+        .metrics-overall {
+            font-size: 1.1em;
+            margin-top: 12px;
+        }
+        .metrics-overall span {
+            display: inline-block;
+            min-width: 180px;
+            padding: 6px 12px;
+            background-color: #e9ecef;
+            border-radius: 6px;
+            margin-right: 20px;
+            margin-bottom: 12px;
+            color: #001f4d;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ client_name }} - Profit Diagnostic Report (Last 30 Days)</h1>
+    <div class="subtitle">Prepared by Sava Crnjak</div>
+
+    <!-- 1. Driver Analysis -->
+        <div class="section">
+     <h2>1. Driver Analysis</h2>
+
+     <div class="flex-row">
+
+     <!-- TABLE (LEFT) -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Driver Assigned</th>
+                        <th style="cursor:pointer; text-decoration:underline;"
+			    onclick="updateDriverChart('avg_dh')">
+				Average Deadhead
+			</th>
+                        <th style="cursor:pointer; text-decoration:underline;"
+    			    onclick="updateDriverChart('cpm')">
+   				Avg Cost per Mile
+			</th>
+
+			<th style="cursor:pointer; text-decoration:underline;"
+    			    onclick="updateDriverChart('revenue')">
+    				Total Revenue
+			</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for driver in drivers %}
+                    <tr>
+                        <td>{{ driver['Driver Assigned'] }}</td>
+                        <td>{{ driver['Avg DH'] }}</td>
+                        <td>${{ driver['Avg CPM'] }}</td>
+                        <td>${{ driver['Total Revenue'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+     <!-- CHART (RIGHT) -->
+        <div class="chart-container">
+            <canvas id="driverChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+
+    <!-- 2. Broker Analysis -->
+    <div class="section">
+    <h2>2. Broker Analysis</h2>
+
+    <div class="flex-row">
+
+        <!-- TABLE (LEFT) -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Broker Name</th>
+
+                        <th style="cursor:pointer; text-decoration:underline;"
+                            onclick="updateBrokerChart('loads')">
+                            Loads
+                        </th>
+
+                        <th style="cursor:pointer; text-decoration:underline;"
+                            onclick="updateBrokerChart('profit')">
+                            Avg Profit
+                        </th>
+
+                        <th style="cursor:pointer; text-decoration:underline;"
+                            onclick="updateBrokerChart('rpm')">
+                            Rate per Mile (RPM)
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for broker in brokers %}
+                    <tr>
+                        <td>{{ broker['Broker Name'] }}</td>
+                        <td>{{ broker['Loads'] }}</td>
+                        <td>${{ broker['Average Profit'] }}</td>
+                        <td>${{ broker['RPM'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CHART (RIGHT) -->
+        <div class="chart-container">
+            <canvas id="brokerChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+    <!-- 3. Dispatcher Analysis -->
+    <div class="section">
+        <h2>3. Dispatcher Analysis</h2>
+
+	<div class="flex-row">
+
+        <!-- TABLE (LEFT) -->
+	<div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Dispatcher</th>
+                    <th style="cursor:pointer; text-decoration:underline;"
+    			onclick="updateDispatcherChart('ppm')">
+    			Profit Per Mile
+		    </th>
+
+		    <th style="cursor:pointer; text-decoration:underline;"
+  	  		onclick="updateDispatcherChart('rpmd')">
+    			Rate Per Mile
+		    </th>
+
+		    <th style="cursor:pointer; text-decoration:underline;"
+    			onclick="updateDispatcherChart('dhperc')">
+    			Deadhead Percentage (%)
+		    </th>
+
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for dispatcher in dispatchers %}
+                <tr>
+                    <td>{{ dispatcher['Dispatcher'] }}</td>
+                    <td>${{ dispatcher['Profit Per Mile'] }}</td>
+                    <td>${{ dispatcher['Rate Per Mile'] }}</td>
+                    <td>{{ dispatcher['Deadhead Percentage'] }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+	<!-- CHART (RIGHT) -->
+        <div class="chart-container">
+            <canvas id="dispatcherChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+
+    <!-- 4. Overall Performance -->
+    <div class="section">
+        <h2>4. Overall Performance</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Profit per Mile</th>
+                    <th>Total Profit</th>
+                    <th>Avg Cost per Mile</th>
+                    <th>Revenue per Week</th>
+ 		    <th>Total Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+		   <tr style="background-color: #DBB933; color: #001f4d; font-weight: bold;">
+                    <td>${{ ppm }}</td>
+                    <td>${{ total_profit }}</td>
+                    <td>${{ cpm }}</td>
+                    <td>${{ revenue_per_week }}</td>
+		    <td>${{ total_revenue }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- 5. Action Plan -->
+    <div class="section">
+        <h2>5. Action Plan</h2>
+        <div class="blank-section">
+    <ul>
+        <li>
+            Reassign more loads from Dispatcher B to Dispatcher A, as Dispatcher A consistently delivers higher profit per mile and lower deadhead percentage.
+        </li>
+        <li>
+            Prioritize high-profit loads from Echo and CH Robinson, while maintaining XPO for volume stability.
+        </li>
+        <li>
+            Review loads from JB Hunt, TQL, and Coyote to determine whether they can be shifted to higher-performing brokers to improve overall profitability.
+        </li>
+    </ul>
+</div>
+
+    </div>
+
+    <!-- Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Python data → JavaScript -->
+   	<!-- Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Python data → JavaScript -->
+<script>
+	const driverData = {
+    		labels: [
+        		{% for driver in drivers %}
+            		"{{ driver['Driver Assigned'] }}",
+        		{% endfor %}
+    ],
+    		revenue: [
+        		{% for driver in drivers %}
+            		{{ driver['Total Revenue'] }},
+       			{% endfor %}
+    ],
+    		cpm: [
+        		{% for driver in drivers %}
+            		{{ driver['Avg CPM'] }},
+        		{% endfor %}
+    ],		
+    		avg_dh: [
+        		{% for driver in drivers %}
+            		{{ driver['Avg DH'] }},
+        		{% endfor %}
+    ]
+};
+</script>
+
+<script>
+	const brokerData = {
+    		labels: [
+        		{% for broker in brokers %}
+            		"{{ broker['Broker Name'] }}",
+       			{% endfor %}
+    ],
+    		loads: [
+        		{% for broker in brokers %}
+            		{{ broker['Loads'] }},
+        		{% endfor %}
+    ],
+    		profit: [
+        		{% for broker in brokers %}
+            		{{ broker['Average Profit'] }},
+        		{% endfor %}
+    ],
+    		rpm: [
+        		{% for broker in brokers %}
+            		{{ broker['RPM'] }},
+        		{% endfor %}
+    ]
+};
+</script>
+
+<script>
+	
+	const dispatcherData = {
+    		labels: [
+        		{% for dispatcher in dispatchers %}
+            		"{{ dispatcher['Dispatcher'] }}",
+        		{% endfor %}
+    ],
+    		ppm: [
+        		{% for dispatcher in dispatchers %}
+            		{{ dispatcher['Profit Per Mile'] }},
+        		{% endfor %}
+    ],
+    		rpmd: [
+        		{% for dispatcher in dispatchers %}
+            		{{ dispatcher['Rate Per Mile'] }},
+        		{% endfor %}
+    ],
+    		dhperc: [
+        		{% for dispatcher in dispatchers %}
+            		{{ dispatcher['Deadhead Percentage'] }},
+        		{% endfor %}
+    ]
+};
+</script>
+
+
+<!-- Create + update chart -->
+<script>
+const ctx = document.getElementById('driverChart');
+
+let sortAscending = true;
+
+let driverChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: driverData.labels,
+        datasets: [{
+            label: 'Total Revenue by Driver',
+            data: driverData.revenue,
+	    backgroundColor:'#92A1B0',
+    	    borderColor: '#001f4d',
+   	    borderWidth: 1
+        }]
+    },
+     options: {
+        responsive: true,
+        plugins: {
+	    legend: {
+		display: false,
+	    },
+            title: {
+                display: true,
+                text: 'Total Revenue by Driver',
+                font: {
+                    family: 'Arial',
+                    size: 18,
+                    weight: 'bold'
+                },
+                color: '#001f4d'
+            }
+        },
+	scales: {
+    	    x: {
+                grid: {
+                  display: false
+                }
+            },
+    	    y: {
+                grid: {
+                  display: true
+                }
+    	    }
+	}
+    }
+});
+
+function updateDriverChart(metric) {
+
+    // 1. Pair labels with selected metric
+    let combined = driverData.labels.map((label, index) => {
+        return {
+            label: label,
+            value: driverData[metric][index]
+        };
+    });
+
+    // 2. Sort (toggle asc/desc)
+    combined.sort((a, b) => {
+        return sortAscending ? a.value - b.value : b.value - a.value;
+    });
+
+    // 3. Flip sort direction for next click
+    sortAscending = !sortAscending;
+
+    // 4. Unzip sorted data
+    driverChart.data.labels = combined.map(item => item.label);
+    driverChart.data.datasets[0].data = combined.map(item => item.value);
+
+    // 5. Update label text
+    const labelMap = {
+        revenue: 'Total Revenue by Driver',
+        cpm: 'Avg Cost per Mile by Driver',
+        avg_dh: 'Average Deadhead Miles by Driver'
+    };
+
+    driverChart.data.datasets[0].label = labelMap[metric];
+    driverChart.options.plugins.title.text = driverChart.data.datasets[0].label;
+    driverChart.update();
+}
+</script>
+
+<script>
+const brokerCtx = document.getElementById('brokerChart');
+
+let brokerSortAscending = true;
+
+let brokerChart = new Chart(brokerCtx, {
+    type: 'bar',
+    data: {
+        labels: brokerData.labels,
+        datasets: [{
+            label: 'Loads by Broker',
+            data: brokerData.loads,
+            backgroundColor: '#92A1B0',
+            borderColor: '#001f4d',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Loads by Broker',
+                font: {
+                    family: 'Arial',
+                    size: 18,
+                    weight: 'bold'
+                },
+                color: '#001f4d'
+            }
+        }
+    }
+});
+
+function updateBrokerChart(metric) {
+
+    let combined = brokerData.labels.map((label, index) => ({
+        label: label,
+        value: brokerData[metric][index]
+    }));
+
+    combined.sort((a, b) =>
+        brokerSortAscending ? a.value - b.value : b.value - a.value
+    );
+
+    brokerSortAscending = !brokerSortAscending;
+
+    brokerChart.data.labels = combined.map(item => item.label);
+    brokerChart.data.datasets[0].data = combined.map(item => item.value);
+
+    const labelMap = {
+        loads: 'Loads by Broker',
+        profit: 'Avg Profit by Broker',
+        rpm: 'Rate per Mile by Broker'
+    };
+
+    brokerChart.data.datasets[0].label = labelMap[metric];
+    brokerChart.options.plugins.title.text = labelMap[metric];
+
+    brokerChart.update();
+}
+</script>
+
+<script>
+const dispatcherCtx = document.getElementById('dispatcherChart');
+
+let dispatcherSortAscending = true;
+
+let dispatcherChart = new Chart(dispatcherCtx, {
+    type: 'bar',
+    data: {
+        labels: dispatcherData.labels,
+        datasets: [{
+            label: 'Profit Per Mile by Dispatcher',
+            data: dispatcherData.ppm,
+            backgroundColor: '#92A1B0',
+            borderColor: '#001f4d',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Profit Per Mile by Dispatcher',
+                font: {
+                    family: 'Arial',
+                    size: 18,
+                    weight: 'bold'
+                },
+                color: '#001f4d'
+            }
+        }
+    }
+});
+
+function updateDispatcherChart(metric) {
+
+    let combined = dispatcherData.labels.map((label, index) => ({
+        label: label,
+        value: dispatcherData[metric][index]
+    }));
+
+    combined.sort((a, b) =>
+        dispatcherSortAscending ? a.value - b.value : b.value - a.value
+    );
+
+    dispatcherSortAscending = !dispatcherSortAscending;
+
+    dispatcherChart.data.labels = combined.map(item => item.label);
+    dispatcherChart.data.datasets[0].data = combined.map(item => item.value);
+
+    const labelMap = {
+        ppm: 'Profit Per Mile by Dispatcher',
+        rpmd: 'Rate Per Mile by Dispatcher',
+        dhperc: 'Average Deadhead Percentage by Dispatcher'
+    };
+
+    dispatcherChart.data.datasets[0].label = labelMap[metric];
+    dispatcherChart.options.plugins.title.text = labelMap[metric];
+
+    dispatcherChart.update();
+}
+</script>
+
+
+</body>
+</html>
